@@ -16,8 +16,9 @@ variable "team_name" {
 }
 
 variable "warp_app_id" {
-  description = "ID of the existing WARP-type Access Application (only one per account). Find with: curl -s 'https://api.cloudflare.com/client/v4/accounts/<ACCOUNT_ID>/access/apps' -H 'Authorization: Bearer <TOKEN>' | jq '.result[] | select(.type==\"warp\") | .id'"
+  description = "ID of an existing WARP-type Access Application to import. Leave empty for a fresh deploy. Find with: curl -s 'https://api.cloudflare.com/client/v4/accounts/<ACCOUNT_ID>/access/apps' -H 'Authorization: Bearer <TOKEN>' | jq '.result[] | select(.type==\"warp\") | .id'"
   type        = string
+  default     = ""
 }
 
 variable "service_token_duration" {

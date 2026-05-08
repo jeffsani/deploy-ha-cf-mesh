@@ -54,7 +54,7 @@ Add these as **Terraform variables** (not environment variables) in your TFC wor
 | `cloudflare_account_id` | Terraform | **Yes** | Your Cloudflare account ID |
 | `cloudflare_api_token` | Terraform | **Yes** | API token with the permissions above |
 | `team_name` | Terraform | No | Zero Trust org name (the `<team>` in `<team>.cloudflareaccess.com`) |
-| `warp_app_id` | Terraform | No | Existing WARP Access Application ID (see [step 2](#2-find-your-warp-app-id)) |
+| `warp_app_id` | Terraform | No | *(Optional)* Existing WARP Access Application ID — leave empty for fresh deploys (see [step 2](#2-check-for-existing-warp-app)) |
 
 ## Quick Start
 
@@ -78,14 +78,17 @@ export TF_CLOUD_ORGANIZATION="YourOrg"
 export TF_WORKSPACE="your-workspace"
 ```
 
-### 2. Find Your WARP App ID
+### 2. Check for Existing WARP App
 
-Every Cloudflare account has exactly one WARP-type Access Application (auto-created). You need its ID before deploying:
+Every Cloudflare account can have at most one WARP-type Access Application. Check if one already exists:
 
 ```bash
 curl -s "https://api.cloudflare.com/client/v4/accounts/<ACCOUNT_ID>/access/apps" \
   -H "Authorization: Bearer <API_TOKEN>" | jq '.result[] | select(.type=="warp") | .id'
 ```
+
+- **If it returns a UUID** → set `warp_app_id` to that value in TFC. Terraform will import the existing app.
+- **If it returns empty** → leave `warp_app_id` unset (or `""`). Terraform will create the app fresh.
 
 ### 3. Set Variables
 
@@ -96,7 +99,7 @@ Add the following as **Terraform variables** (not environment variables) in your
 | `cloudflare_account_id` | **Yes** | Your Cloudflare account ID |
 | `cloudflare_api_token` | **Yes** | API token with [required permissions](#api-token-permissions) |
 | `team_name` | No | Zero Trust org name (`<team>` in `<team>.cloudflareaccess.com`) |
-| `warp_app_id` | No | The ID from step 2 |
+| `warp_app_id` | No | *(Optional)* The ID from step 2, or leave empty for fresh deploys |
 
 For **local development**, you can alternatively use a tfvars file:
 
@@ -186,7 +189,7 @@ You should see the connector listed on the [Mesh overview page](https://one.dash
 | `cloudflare_account_id` | Cloudflare account ID | — |
 | `cloudflare_api_token` | API token with ZT permissions | — |
 | `team_name` | Zero Trust team name | — |
-| `warp_app_id` | Existing WARP Access Application ID | — |
+| `warp_app_id` | Existing WARP Access Application ID (optional) | `""` |
 | `service_token_duration` | Service token TTL | `8760h` |
 
 ## Cleanup
