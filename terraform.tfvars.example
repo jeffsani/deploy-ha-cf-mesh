@@ -1,0 +1,10 @@
+# Cloudflare credentials — set these in Terraform Cloud workspace variables
+# or copy this file to temp.auto.tfvars for local development.
+cloudflare_account_id = "your-cloudflare-account-id"
+cloudflare_api_token  = "your-cloudflare-api-token"
+
+# Cloudflare Zero Trust team name (the subdomain in <team>.cloudflareaccess.com)
+team_name = "marigold68"
+
+# Service token duration (default: 1 year)
+# service_token_duration = "8760h"

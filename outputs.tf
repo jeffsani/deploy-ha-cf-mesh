@@ -1,0 +1,36 @@
+output "service_token_client_id" {
+  description = "Client ID of the service token for headless device enrollment"
+  value       = cloudflare_zero_trust_access_service_token.mesh_service_token.client_id
+}
+
+output "service_token_client_secret" {
+  description = "Client Secret of the service token (sensitive)"
+  value       = cloudflare_zero_trust_access_service_token.mesh_service_token.client_secret
+  sensitive   = true
+}
+
+output "connector_id" {
+  description = "ID of the mesh connector"
+  value       = cloudflare_zero_trust_tunnel_warp_connector.sflow_proxy.id
+}
+
+output "connector_name" {
+  description = "Name of the mesh connector"
+  value       = cloudflare_zero_trust_tunnel_warp_connector.sflow_proxy.name
+}
+
+output "connector_token" {
+  description = "Token for the mesh connector — use on all replica hosts (sensitive)"
+  value       = data.cloudflare_zero_trust_tunnel_cloudflared_token.sflow_proxy_token.token
+  sensitive   = true
+}
+
+output "install_script_debian" {
+  description = "Path to generated Debian install script"
+  value       = local_file.install_debian.filename
+}
+
+output "install_script_rhel" {
+  description = "Path to generated RHEL install script"
+  value       = local_file.install_rhel.filename
+}
