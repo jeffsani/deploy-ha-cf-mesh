@@ -11,20 +11,8 @@ variable "cloudflare_api_token" {
 }
 
 variable "team_name" {
-  description = "Cloudflare Zero Trust team/organization name (e.g. marigold68)"
+  description = "Cloudflare Zero Trust team/organization name (the subdomain in <team>.cloudflareaccess.com)"
   type        = string
-}
-
-variable "tfc_organization" {
-  description = "Terraform Cloud organization name"
-  type        = string
-  default     = "JPS_Consulting"
-}
-
-variable "tfc_workspace" {
-  description = "Terraform Cloud workspace name"
-  type        = string
-  default     = "deploy-ha-cf-mesh"
 }
 
 variable "warp_app_id" {

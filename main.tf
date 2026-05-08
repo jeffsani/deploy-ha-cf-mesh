@@ -1,13 +1,12 @@
 terraform {
   # NOTE: Terraform Cloud backend does not support variable interpolation.
-  # Update the organization and workspace name below to match your environment,
-  # or set them via the TF_CLOUD_ORGANIZATION and TF_WORKSPACE env vars and
-  # remove the literal values.
+  # Replace the values below with your own, or set the TF_CLOUD_ORGANIZATION
+  # and TF_WORKSPACE environment variables and remove the literal values.
   cloud {
-    organization = "JPS_Consulting"
+    organization = "YOUR_TFC_ORG"
 
     workspaces {
-      name = "deploy-ha-cf-mesh"
+      name = "YOUR_TFC_WORKSPACE"
     }
   }
 

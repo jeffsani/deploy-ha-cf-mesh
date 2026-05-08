@@ -6,5 +6,8 @@ cloudflare_api_token  = "your-cloudflare-api-token"
 # Cloudflare Zero Trust team name (the subdomain in <team>.cloudflareaccess.com)
 team_name = "your-team-name"
 
+# Existing WARP Access Application ID (see README for how to find this)
+warp_app_id = "your-warp-app-id"
+
 # Service token duration (default: 1 year)
 # service_token_duration = "8760h"
