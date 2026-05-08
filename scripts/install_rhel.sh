@@ -2,14 +2,29 @@
 set -euo pipefail
 
 # =============================================================================
-# sFlow Mesh Connector Install Script — RHEL/CentOS/Fedora
-# Connector: ${connector_name}
+# Cloudflare Mesh Connector Install Script — RHEL/CentOS/Fedora
+#
+# Usage:
+#   sudo ./install_rhel.sh <CONNECTOR_TOKEN>
+#
+# The connector token can be obtained from Terraform:
+#   terraform output -raw connector_token
 # =============================================================================
+
+CONNECTOR_TOKEN="${1:-}"
+
+if [[ -z "$CONNECTOR_TOKEN" ]]; then
+  echo "ERROR: Connector token is required."
+  echo "Usage: $0 <CONNECTOR_TOKEN>"
+  echo ""
+  echo "Get the token with: terraform output -raw connector_token"
+  exit 1
+fi
 
 echo ">>> Installing Cloudflare WARP client (RHEL/CentOS/Fedora)..."
 
 # Add cloudflare-warp.repo to /etc/yum.repos.d/
-curl -fsSl https://pkg.cloudflareclient.com/cloudflare-warp-ascii.repo | sudo tee /etc/yum.repos.d/cloudflare-warp.repo
+curl -fsSL https://pkg.cloudflareclient.com/cloudflare-warp-ascii.repo | sudo tee /etc/yum.repos.d/cloudflare-warp.repo
 
 # Update repo
 sudo yum update -y
@@ -39,7 +54,7 @@ fi
 
 # Register and connect the Mesh Connector
 echo ">>> Registering mesh connector..."
-warp-cli connector new ${connector_token}
+warp-cli connector new "$CONNECTOR_TOKEN"
 warp-cli connect
 
-echo ">>> sFlow Mesh Connector '${connector_name}' setup complete."
+echo ">>> Mesh Connector setup complete."

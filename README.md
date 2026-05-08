@@ -87,19 +87,21 @@ curl -s "https://api.cloudflare.com/client/v4/accounts/<ACCOUNT_ID>/access/apps"
   -H "Authorization: Bearer <API_TOKEN>" | jq '.result[] | select(.type=="warp") | .id'
 ```
 
-- **If it returns a UUID** → set `warp_app_id` to that value in TFC. Terraform will import the existing app.
-- **If it returns empty** → leave `warp_app_id` unset (or `""`). Terraform will create the app fresh.
+- **If it returns a UUID** → you have an existing WARP app. You **must** create a `warp_app_id` Terraform variable in your TFC workspace and set it to that UUID. Terraform will import the existing app into state instead of trying to create a duplicate (which would fail with a 409 error).
+- **If it returns empty** → this is a fresh account with no WARP app. **Do not** create a `warp_app_id` variable in TFC. Terraform will create the app automatically.
+
+> **Important:** In TFC, "not set" means the variable does not exist in the workspace at all. Do not create the variable and set it to `""` — TFC will pass literal quotes which causes an error.
 
 ### 3. Set Variables
 
 Add the following as **Terraform variables** (not environment variables) in your [TFC workspace settings](https://app.terraform.io):
 
-| Variable | Sensitive | Value |
-|----------|-----------|-------|
-| `cloudflare_account_id` | **Yes** | Your Cloudflare account ID |
-| `cloudflare_api_token` | **Yes** | API token with [required permissions](#api-token-permissions) |
-| `team_name` | No | Zero Trust org name (`<team>` in `<team>.cloudflareaccess.com`) |
-| `warp_app_id` | No | *(Optional)* The ID from step 2, or leave empty for fresh deploys |
+| Variable | Sensitive | Required | Value |
+|----------|-----------|----------|-------|
+| `cloudflare_account_id` | **Yes** | Yes | Your Cloudflare account ID |
+| `cloudflare_api_token` | **Yes** | Yes | API token with [required permissions](#api-token-permissions) |
+| `team_name` | No | Yes | Zero Trust org name (`<team>` in `<team>.cloudflareaccess.com`) |
+| `warp_app_id` | No | Only if step 2 returned a UUID | The UUID from step 2 |
 
 For **local development**, you can alternatively use a tfvars file:
 
@@ -129,11 +131,13 @@ After the first apply, enable this setting in the Cloudflare dashboard:
 
 ### 6. Retrieve the Connector Token
 
-The connector token is marked as sensitive. To retrieve it locally:
+The connector token is marked as sensitive. To retrieve it from your local machine (requires TFC credentials):
 
 ```bash
-terraform init          # required if first time or after backend changes
-terraform output -raw connector_token
+export TF_CLOUD_ORGANIZATION="YourOrg"
+export TF_WORKSPACE="your-workspace"
+terraform init
+TOKEN=$(terraform output -raw connector_token)
 ```
 
 You can also retrieve the service token secret:
@@ -146,23 +150,27 @@ terraform output -raw service_token_client_secret
 
 HA is achieved by installing the **same connector token** on multiple hosts. Each host registers as a replica of the same Mesh connector.
 
-After `terraform apply`, install scripts are generated in `scripts/generated/`. The connector token is baked into the scripts. Copy and run the **same script** on every host you want in the HA group:
+The install scripts are in `scripts/` and accept the token as a command-line argument. Copy the appropriate script to each host and run it with the token:
 
 **Debian/Ubuntu:**
 
 ```bash
+TOKEN=$(terraform output -raw connector_token)
+
 for host in host1 host2 host3; do
-  scp scripts/generated/install_debian.sh user@${host}:~/
-  ssh user@${host} 'chmod +x ~/install_debian.sh && sudo ~/install_debian.sh'
+  scp scripts/install_debian.sh user@${host}:~/
+  ssh user@${host} "chmod +x ~/install_debian.sh && sudo ~/install_debian.sh $TOKEN"
 done
 ```
 
 **RHEL/CentOS/Fedora:**
 
 ```bash
+TOKEN=$(terraform output -raw connector_token)
+
 for host in host1 host2 host3; do
-  scp scripts/generated/install_rhel.sh user@${host}:~/
-  ssh user@${host} 'chmod +x ~/install_rhel.sh && sudo ~/install_rhel.sh'
+  scp scripts/install_rhel.sh user@${host}:~/
+  ssh user@${host} "chmod +x ~/install_rhel.sh && sudo ~/install_rhel.sh $TOKEN"
 done
 ```
 
@@ -210,18 +218,17 @@ rm -f temp.auto.tfvars
 .
 ├── main.tf                  # Provider & backend config
 ├── variables.tf             # Input variables
-├── outputs.tf               # Outputs (tokens, script paths)
+├── outputs.tf               # Outputs (tokens)
 ├── service_token.tf         # Service token for headless enrollment
 ├── access_policy.tf         # Service Auth access policy
-├── device_enrollment.tf     # WARP device enrollment application
+├── device_enrollment.tf     # WARP device enrollment application (with conditional import)
 ├── device_profile.tf        # "sFlow" custom device profile
 ├── global_settings.tf       # Global device settings (CGNAT IPs, Gateway proxy)
-├── mesh_connector.tf        # HA mesh connector instances
-├── scripts.tf               # Renders install script templates
+├── mesh_connector.tf        # HA mesh connector + token construction
+├── scripts.tf               # (reference only — documents script usage)
 ├── scripts/
-│   ├── install_debian.sh.tpl
-│   ├── install_rhel.sh.tpl
-│   └── generated/           # (created by terraform apply)
+│   ├── install_debian.sh    # Standalone install script — pass token as argument
+│   └── install_rhel.sh      # Standalone install script — pass token as argument
 ├── terraform.tfvars.example
 ├── .gitignore
 └── README.md

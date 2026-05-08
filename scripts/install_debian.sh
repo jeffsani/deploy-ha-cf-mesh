@@ -2,14 +2,29 @@
 set -euo pipefail
 
 # =============================================================================
-# sFlow Mesh Connector Install Script — Debian/Ubuntu
-# Connector: ${connector_name}
+# Cloudflare Mesh Connector Install Script — Debian/Ubuntu
+#
+# Usage:
+#   sudo ./install_debian.sh <CONNECTOR_TOKEN>
+#
+# The connector token can be obtained from Terraform:
+#   terraform output -raw connector_token
 # =============================================================================
+
+CONNECTOR_TOKEN="${1:-}"
+
+if [[ -z "$CONNECTOR_TOKEN" ]]; then
+  echo "ERROR: Connector token is required."
+  echo "Usage: $0 <CONNECTOR_TOKEN>"
+  echo ""
+  echo "Get the token with: terraform output -raw connector_token"
+  exit 1
+fi
 
 echo ">>> Installing Cloudflare WARP client (Debian/Ubuntu)..."
 
 # Setup pubkey, apt repo, and update/install the Cloudflare One Client
-curl https://pkg.cloudflareclient.com/pubkey.gpg | sudo gpg --yes --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
+curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | sudo gpg --yes --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
 echo "deb [signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflare-client.list
 sudo apt-get update && sudo apt-get install -y cloudflare-warp
 
@@ -35,7 +50,7 @@ fi
 
 # Register and connect the Mesh Connector
 echo ">>> Registering mesh connector..."
-warp-cli connector new ${connector_token}
+warp-cli connector new "$CONNECTOR_TOKEN"
 warp-cli connect
 
-echo ">>> sFlow Mesh Connector '${connector_name}' setup complete."
+echo ">>> Mesh Connector setup complete."

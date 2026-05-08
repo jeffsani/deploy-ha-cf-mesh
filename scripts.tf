@@ -1,21 +1,7 @@
-resource "local_file" "install_debian" {
-  filename = "${path.module}/scripts/generated/install_debian.sh"
-
-  content = templatefile("${path.module}/scripts/install_debian.sh.tpl", {
-    connector_name  = cloudflare_zero_trust_tunnel_warp_connector.sflow_proxy.name
-    connector_token = local.connector_token
-  })
-
-  file_permission = "0755"
-}
-
-resource "local_file" "install_rhel" {
-  filename = "${path.module}/scripts/generated/install_rhel.sh"
-
-  content = templatefile("${path.module}/scripts/install_rhel.sh.tpl", {
-    connector_name  = cloudflare_zero_trust_tunnel_warp_connector.sflow_proxy.name
-    connector_token = local.connector_token
-  })
-
-  file_permission = "0755"
-}
+# Install scripts are now standalone bash scripts in scripts/.
+# They accept the connector token as a CLI argument.
+# No Terraform rendering needed — just copy the script to hosts and run:
+#
+#   TOKEN=$(terraform output -raw connector_token)
+#   scp scripts/install_debian.sh user@host:~/
+#   ssh user@host "chmod +x ~/install_debian.sh && sudo ~/install_debian.sh $TOKEN"

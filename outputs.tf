@@ -25,12 +25,3 @@ output "connector_token" {
   sensitive   = true
 }
 
-output "install_script_debian" {
-  description = "Path to generated Debian install script"
-  value       = local_file.install_debian.filename
-}
-
-output "install_script_rhel" {
-  description = "Path to generated RHEL install script"
-  value       = local_file.install_rhel.filename
-}
