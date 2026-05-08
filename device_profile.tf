@@ -10,8 +10,11 @@ resource "cloudflare_zero_trust_device_custom_profile" "sflow" {
   tunnel_protocol = "masque"
 
   service_mode_v2 = {
-    mode = "proxy"
+    mode = "warp_tunnel_only"
   }
+
+  captive_portal = 0
+  allow_updates  = true
 
   include = [
     {
