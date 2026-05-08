@@ -50,7 +50,7 @@ fi
 
 # Register and connect the Mesh Connector
 echo ">>> Registering mesh connector..."
-warp-cli connector new "$CONNECTOR_TOKEN"
-warp-cli connect
+warp-cli --accept-tos connector new "$CONNECTOR_TOKEN"
+warp-cli --accept-tos connect
 
 echo ">>> Mesh Connector setup complete."
