@@ -21,7 +21,7 @@ output "connector_name" {
 
 output "connector_token" {
   description = "Token for the mesh connector — use on all replica hosts (sensitive)"
-  value       = cloudflare_zero_trust_tunnel_warp_connector.sflow_proxy.token_value
+  value       = local.connector_token
   sensitive   = true
 }
 
