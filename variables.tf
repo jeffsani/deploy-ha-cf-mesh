@@ -27,6 +27,11 @@ variable "tfc_workspace" {
   default     = "deploy-ha-cf-mesh"
 }
 
+variable "warp_app_id" {
+  description = "ID of the existing WARP-type Access Application (only one per account). Find with: curl -s 'https://api.cloudflare.com/client/v4/accounts/<ACCOUNT_ID>/access/apps' -H 'Authorization: Bearer <TOKEN>' | jq '.result[] | select(.type==\"warp\") | .id'"
+  type        = string
+}
+
 variable "service_token_duration" {
   description = "Duration of the service token (e.g. 8760h = 1 year)"
   type        = string
