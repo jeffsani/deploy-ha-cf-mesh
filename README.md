@@ -17,11 +17,29 @@ Terraform project that deploys a highly-available [Cloudflare Mesh](https://deve
 
 - [Terraform](https://developer.hashicorp.com/terraform/install) >= 1.5
 - A [Terraform Cloud](https://app.terraform.io) account (or modify `main.tf` to use a local backend)
-- A Cloudflare API token with the following permissions:
-  - `Access: Apps and Policies Write`
-  - `Access: Service Tokens Write`
-  - `Cloudflare One Connectors Write`
-  - `Zero Trust Write`
+- A Cloudflare API token with the permissions listed below
+
+### API Token Permissions
+
+Create a [custom API token](https://dash.cloudflare.com/profile/api-tokens) scoped to your account with the following permissions:
+
+| Permission | Access Level | Used By |
+|------------|-------------|---------|
+| **Access: Apps and Policies** | Edit | Device enrollment application, access policy |
+| **Access: Service Tokens** | Edit | Service token for headless enrollment |
+| **Cloudflare One Connectors** | Edit | Mesh connector creation and token retrieval |
+| **Zero Trust** | Edit | Custom device profile |
+| **Account Settings** | Read | Account-level resource lookups |
+
+### Terraform Cloud Workspace Variables
+
+Add these as **Terraform variables** (not environment variables) in your TFC workspace settings:
+
+| Variable | Category | Sensitive | Description |
+|----------|----------|-----------|-------------|
+| `cloudflare_account_id` | Terraform | **Yes** | Your Cloudflare account ID |
+| `cloudflare_api_token` | Terraform | **Yes** | API token with the permissions above |
+| `team_name` | Terraform | No | Zero Trust org name (e.g. `marigold68`) |
 
 ## Quick Start
 
@@ -36,21 +54,13 @@ export TF_WORKSPACE="deploy-ha-cf-mesh"
 
 ### 2. Set Variables
 
-**Option A — Terraform Cloud (recommended):**
+Set the Terraform Cloud workspace variables as described in [Terraform Cloud Workspace Variables](#terraform-cloud-workspace-variables) above.
 
-Add these as workspace variables in Terraform Cloud (mark sensitive values accordingly):
-
-| Variable | Type | Sensitive |
-|----------|------|-----------|
-| `cloudflare_account_id` | Terraform | Yes |
-| `cloudflare_api_token` | Terraform | Yes |
-| `team_name` | Terraform | No |
-
-**Option B — Local development:**
+For **local development**, you can alternatively use a tfvars file:
 
 ```bash
 cp terraform.tfvars.example temp.auto.tfvars
-# Edit temp.auto.tfvars with your values
+# Edit temp.auto.tfvars with your values (this file is gitignored)
 ```
 
 ### 3. Deploy

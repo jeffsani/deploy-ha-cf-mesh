@@ -1,9 +1,8 @@
 resource "cloudflare_zero_trust_access_application" "mesh_device_enrollment" {
-  account_id           = var.cloudflare_account_id
-  type                 = "warp"
-  name                 = "sFlow Mesh Device Enrollment"
-  app_launcher_visible = false
-  session_duration     = "24h"
+  account_id       = var.cloudflare_account_id
+  type             = "warp"
+  name             = "sFlow Mesh Device Enrollment"
+  session_duration = "24h"
 
   policies = [
     {

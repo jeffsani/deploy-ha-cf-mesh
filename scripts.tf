@@ -3,7 +3,7 @@ resource "local_file" "install_debian" {
 
   content = templatefile("${path.module}/scripts/install_debian.sh.tpl", {
     connector_name  = cloudflare_zero_trust_tunnel_warp_connector.sflow_proxy.name
-    connector_token = data.cloudflare_zero_trust_tunnel_cloudflared_token.sflow_proxy_token.token
+    connector_token = cloudflare_zero_trust_tunnel_warp_connector.sflow_proxy.token_value
   })
 
   file_permission = "0755"
@@ -14,7 +14,7 @@ resource "local_file" "install_rhel" {
 
   content = templatefile("${path.module}/scripts/install_rhel.sh.tpl", {
     connector_name  = cloudflare_zero_trust_tunnel_warp_connector.sflow_proxy.name
-    connector_token = data.cloudflare_zero_trust_tunnel_cloudflared_token.sflow_proxy_token.token
+    connector_token = cloudflare_zero_trust_tunnel_warp_connector.sflow_proxy.token_value
   })
 
   file_permission = "0755"
