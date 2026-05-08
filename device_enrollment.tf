@@ -2,7 +2,7 @@
 # The import block below adopts the pre-existing app into Terraform state.
 import {
   to = cloudflare_zero_trust_access_application.mesh_device_enrollment
-  id = "${var.cloudflare_account_id}/${var.warp_app_id}"
+  id = "accounts/${var.cloudflare_account_id}/${var.warp_app_id}"
 }
 
 resource "cloudflare_zero_trust_access_application" "mesh_device_enrollment" {
