@@ -21,6 +21,12 @@ variable "warp_app_id" {
   default     = ""
 }
 
+variable "regions" {
+  description = "List of region identifiers. One HA mesh connector is created per region."
+  type        = list(string)
+  default     = ["default"]
+}
+
 variable "service_token_duration" {
   description = "Duration of the service token (e.g. 8760h = 1 year)"
   type        = string

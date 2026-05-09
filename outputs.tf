@@ -9,19 +9,19 @@ output "service_token_client_secret" {
   sensitive   = true
 }
 
-output "connector_id" {
-  description = "ID of the mesh connector"
-  value       = cloudflare_zero_trust_tunnel_warp_connector.sflow_proxy.id
+output "connector_ids" {
+  description = "Map of region → mesh connector ID"
+  value       = { for region, conn in cloudflare_zero_trust_tunnel_warp_connector.sflow_proxy : region => conn.id }
 }
 
-output "connector_name" {
-  description = "Name of the mesh connector"
-  value       = cloudflare_zero_trust_tunnel_warp_connector.sflow_proxy.name
+output "connector_names" {
+  description = "Map of region → mesh connector name"
+  value       = { for region, conn in cloudflare_zero_trust_tunnel_warp_connector.sflow_proxy : region => conn.name }
 }
 
-output "connector_token" {
-  description = "Token for the mesh connector — use on all replica hosts (sensitive)"
-  value       = local.connector_token
+output "connector_tokens" {
+  description = "Map of region → connector token — use on all replica hosts in that region (sensitive)"
+  value       = local.connector_tokens
   sensitive   = true
 }
 

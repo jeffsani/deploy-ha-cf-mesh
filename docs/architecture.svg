@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 560" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+
+  <!-- Background -->
+  <rect width="1100" height="560" rx="12" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1"/>
+
+  <!-- Title -->
+  <text x="550" y="38" text-anchor="middle" font-size="22" font-weight="bold" fill="#1a1a1a">Terraformed Regional Cloudflare Mesh HA Deployment — Securing Network Flow Data</text>
+
+  <!-- ========== LEFT: Regional Data Centers ========== -->
+  <!-- Box: x=10..310 (width 300) -->
+  <g transform="translate(10, 80)">
+    <rect x="0" y="0" width="300" height="390" rx="12" fill="#F3F4F6" stroke="#9ca3af" stroke-width="2" stroke-dasharray="6,3"/>
+    <text x="150" y="28" text-anchor="middle" font-size="16" font-weight="bold" fill="#374151">Regional Data Centers</text>
+
+    <!-- Bottom router (drawn first so top router covers it) -->
+    <g transform="translate(75, 90)" opacity="0.5">
+      <rect x="0" y="22" width="150" height="36" rx="4" fill="#6b7280"/>
+      <ellipse cx="75" cy="22" rx="75" ry="18" fill="#8b95a0"/>
+      <ellipse cx="75" cy="58" rx="75" ry="18" fill="#555d66"/>
+      <ellipse cx="75" cy="22" rx="68" ry="15" fill="none" stroke="#F6821F" stroke-width="3"/>
+      <polygon points="75,4 81,14 77,14 77,22 73,22 73,14 69,14" fill="#F6821F"/>
+      <polygon points="75,40 69,30 73,30 73,22 77,22 77,30 81,30" fill="#F6821F"/>
+      <polygon points="50,22 60,16 60,20 68,20 68,24 60,24 60,28" fill="#F6821F"/>
+      <polygon points="100,22 90,16 90,20 82,20 82,24 90,24 90,28" fill="#F6821F"/>
+    </g>
+
+    <!-- Top router (front, fully opaque, overlaps bottom) -->
+    <g transform="translate(75, 50)">
+      <rect x="0" y="22" width="150" height="36" rx="4" fill="#6b7280"/>
+      <ellipse cx="75" cy="22" rx="75" ry="18" fill="#8b95a0"/>
+      <ellipse cx="75" cy="58" rx="75" ry="18" fill="#555d66"/>
+      <ellipse cx="75" cy="22" rx="68" ry="15" fill="none" stroke="#F6821F" stroke-width="3"/>
+      <polygon points="75,4 81,14 77,14 77,22 73,22 73,14 69,14" fill="#F6821F"/>
+      <polygon points="75,40 69,30 73,30 73,22 77,22 77,30 81,30" fill="#F6821F"/>
+      <polygon points="50,22 60,16 60,20 68,20 68,24 60,24 60,28" fill="#F6821F"/>
+      <polygon points="100,22 90,16 90,20 82,20 82,24 90,24 90,28" fill="#F6821F"/>
+    </g>
+
+    <text x="150" y="222" text-anchor="middle" font-size="15" font-weight="600" fill="#374151">Router Cluster</text>
+    <text x="150" y="242" text-anchor="middle" font-size="13" fill="#9ca3af">VRRP / HSRP</text>
+
+    <!-- Flow protocol details -->
+    <text x="150" y="278" text-anchor="middle" font-size="14" font-weight="600" fill="#6b7280">Exports:</text>
+    <text x="150" y="300" text-anchor="middle" font-size="13" fill="#6b7280">sFlow — UDP/6343</text>
+    <text x="150" y="320" text-anchor="middle" font-size="13" fill="#6b7280">NetFlow/IPFIX — UDP/2055</text>
+  </g>
+
+  <!-- ========== Left arrow — half height, centered vertically, 10px gap from groups ========== -->
+  <!-- Gap: x=310..390. Arrow: x=320..380 (10px clearance each side). Height=195, centered at y=177.5 -->
+  <g transform="translate(320, 178)">
+    <polygon points="0,0 40,0 60,97 40,195 0,195" fill="#FFF7ED" stroke="#F6821F" stroke-width="1.5"/>
+    <text x="28" y="88" text-anchor="middle" font-size="10" font-weight="700" fill="#F6821F">sFlow</text>
+    <text x="28" y="101" text-anchor="middle" font-size="10" font-weight="700" fill="#F6821F">NetFlow</text>
+    <text x="28" y="114" text-anchor="middle" font-size="10" font-weight="700" fill="#F6821F">IPFIX</text>
+  </g>
+
+  <!-- ========== CENTER: Mesh Connector Hosts (HA) ========== -->
+  <!-- Box: x=390..690 (width 300) -->
+  <g transform="translate(390, 80)">
+    <rect x="0" y="0" width="300" height="390" rx="12" fill="#FFF7ED" stroke="#F6821F" stroke-width="2" stroke-dasharray="6,3"/>
+    <text x="150" y="28" text-anchor="middle" font-size="15" font-weight="bold" fill="#F6821F">HA Group — Same Connector Token</text>
+
+    <!-- Host 1 -->
+    <rect x="20" y="46" width="260" height="78" rx="8" fill="#fff" stroke="#F6821F" stroke-width="1.5"/>
+    <text x="150" y="71" text-anchor="middle" font-size="14" font-weight="600" fill="#374151">&#x1F5A5; Host 1</text>
+    <text x="150" y="90" text-anchor="middle" font-size="12" fill="#6b7280">Mesh Connector + WARP Client</text>
+    <text x="150" y="108" text-anchor="middle" font-size="12" fill="#9ca3af">100.96.x.1</text>
+
+    <!-- Host 2 -->
+    <rect x="20" y="138" width="260" height="78" rx="8" fill="#fff" stroke="#F6821F" stroke-width="1.5"/>
+    <text x="150" y="163" text-anchor="middle" font-size="14" font-weight="600" fill="#374151">&#x1F5A5; Host 2</text>
+    <text x="150" y="182" text-anchor="middle" font-size="12" fill="#6b7280">Mesh Connector + WARP Client</text>
+    <text x="150" y="200" text-anchor="middle" font-size="12" fill="#9ca3af">100.96.x.2</text>
+
+    <!-- Host 3 -->
+    <rect x="20" y="230" width="260" height="78" rx="8" fill="#fff" stroke="#F6821F" stroke-width="1.5"/>
+    <text x="150" y="255" text-anchor="middle" font-size="14" font-weight="600" fill="#374151">&#x1F5A5; Host 3</text>
+    <text x="150" y="274" text-anchor="middle" font-size="12" fill="#6b7280">Mesh Connector + WARP Client</text>
+    <text x="150" y="292" text-anchor="middle" font-size="12" fill="#9ca3af">100.96.x.3</text>
+
+    <!-- IP range -->
+    <text x="150" y="338" text-anchor="middle" font-size="13" fill="#F6821F" font-weight="600">CGNAT: 100.96.0.0/12</text>
+    <text x="150" y="358" text-anchor="middle" font-size="12" fill="#9ca3af">IP forwarding enabled</text>
+  </g>
+
+  <!-- ========== Right arrow — half height, centered vertically, 10px gap from groups ========== -->
+  <!-- Gap: x=690..770. Arrow: x=700..760 (10px clearance each side). Height=195, centered at y=177.5 -->
+  <g transform="translate(700, 178)">
+    <polygon points="0,0 40,0 60,97 40,195 0,195" fill="#FFF7ED" stroke="#F6821F" stroke-width="1.5"/>
+    <text x="28" y="85" text-anchor="middle" font-size="10" font-weight="700" fill="#F6821F">MASQUE</text>
+    <text x="28" y="98" text-anchor="middle" font-size="9" font-weight="700" fill="#F6821F">UDP/443</text>
+    <text x="28" y="111" text-anchor="middle" font-size="9" font-weight="700" fill="#F6821F">TLS 1.3</text>
+  </g>
+
+  <!-- ========== RIGHT: Cloudflare Edge ========== -->
+  <!-- Box: x=770..1070 (width 300) -->
+  <g transform="translate(770, 80)">
+    <rect x="0" y="0" width="300" height="390" rx="12" fill="#F6821F" stroke="#E5700F" stroke-width="2"/>
+
+    <!-- Cloudflare header -->
+    <text x="150" y="32" text-anchor="middle" font-size="18" font-weight="bold" fill="#fff">&#x2601; Cloudflare</text>
+    <text x="150" y="54" text-anchor="middle" font-size="14" fill="#FED7AA">Global Anycast Edge</text>
+    <text x="150" y="72" text-anchor="middle" font-size="13" fill="#FED7AA">(Nearest PoP)</text>
+
+    <!-- Divider -->
+    <line x1="15" y1="84" x2="285" y2="84" stroke="#E5700F" stroke-width="1"/>
+
+    <!-- Network Flow Analytics -->
+    <text x="150" y="108" text-anchor="middle" font-size="14" font-weight="600" fill="#fff">Network Flow Analytics</text>
+
+    <rect x="15" y="118" width="270" height="40" rx="6" fill="#E5700F"/>
+    <text x="150" y="136" text-anchor="middle" font-size="12" fill="#fff">Flow Collector &amp; Rule Evaluation</text>
+    <text x="150" y="152" text-anchor="middle" font-size="12" font-weight="bold" fill="#FED7AA">Anycast: 162.159.65.1</text>
+
+    <!-- Divider -->
+    <line x1="15" y1="170" x2="285" y2="170" stroke="#E5700F" stroke-width="1"/>
+
+    <!-- Mesh Security (managed by Terraform) -->
+    <text x="150" y="192" text-anchor="middle" font-size="14" font-weight="600" fill="#fff">Mesh Security Layer</text>
+
+    <rect x="15" y="204" width="270" height="32" rx="5" fill="#E5700F"/>
+    <text x="150" y="224" text-anchor="middle" font-size="12" fill="#fff">WARP Access App + Policy</text>
+
+    <rect x="15" y="244" width="270" height="32" rx="5" fill="#E5700F"/>
+    <text x="150" y="264" text-anchor="middle" font-size="12" fill="#fff">Service Token Auth</text>
+
+    <rect x="15" y="284" width="270" height="32" rx="5" fill="#E5700F"/>
+    <text x="150" y="304" text-anchor="middle" font-size="12" fill="#fff">Custom Device Profile</text>
+
+    <rect x="15" y="324" width="270" height="32" rx="5" fill="#E5700F"/>
+    <text x="150" y="344" text-anchor="middle" font-size="12" fill="#fff">Global Settings (CGNAT + Gateway Proxy)</text>
+  </g>
+
+  <!-- ========== Bottom: What Terraform Manages ========== -->
+  <!-- Aligned: x=10..1070 matching the group boxes above -->
+  <rect x="10" y="510" width="1060" height="40" rx="8" fill="#F3F4F6" stroke="#D1D5DB" stroke-width="1"/>
+  <text x="540" y="536" text-anchor="middle" font-size="15" font-weight="600" fill="#374151">
+    Terraform manages: Service Token · Access Policy · Device Enrollment · Device Profile · Mesh Connector · Global Settings
+  </text>
+</svg>

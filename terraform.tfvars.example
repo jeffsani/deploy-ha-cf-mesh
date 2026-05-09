@@ -9,5 +9,8 @@ team_name = "your-team-name"
 # Existing WARP Access Application ID (see README for how to find this)
 warp_app_id = "your-warp-app-id"
 
+# Regions — one HA mesh connector per region (default: ["default"])
+# regions = ["us-east", "eu-west"]
+
 # Service token duration (default: 1 year)
 # service_token_duration = "8760h"

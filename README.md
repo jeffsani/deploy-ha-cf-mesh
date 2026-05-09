@@ -1,6 +1,8 @@
 # deploy-ha-cf-mesh
 
-Terraform project that deploys a highly-available [Cloudflare Mesh](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-mesh/) (formerly WARP Connector) configuration with auto-generated install scripts for Debian and RHEL hosts.
+Terraform project that deploys a highly-available [Cloudflare Mesh](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-mesh/) (formerly WARP Connector) configuration with install scripts for Debian and RHEL hosts. Secures network flow data (sFlow/NetFlow/IPFIX) from routers through encrypted WARP tunnels to the Cloudflare global anycast edge.
+
+![Architecture](docs/architecture.svg)
 
 ## What Gets Created
 
@@ -9,8 +11,8 @@ Terraform project that deploys a highly-available [Cloudflare Mesh](https://deve
 | **Service Token** | Enables headless (non-interactive) device enrollment |
 | **Access Policy** | Service Auth policy allowing the service token |
 | **Device Enrollment App** | WARP-type Access Application wired to the service auth policy |
-| **Custom Device Profile** | "sFlow" profile — Traffic Only mode, Include split-tunnel for `162.159.65.1/32` |
-| **Mesh Connector** | Single connector — install the same token on multiple hosts for HA |
+| **Custom Device Profile** | "sFlow" profile — Traffic Only mode, Include split-tunnel for `162.159.65.1/32` (also covers NetFlow/IPFIX to the same collector) |
+| **Mesh Connectors** | One HA connector per region (controlled by the `regions` variable) |
 | **Global Device Settings** | Enables unique CGNAT IPs per device and Gateway proxy (TCP/UDP) — both required for Mesh |
 | **Install Scripts** | Per-connector Debian and RHEL bash scripts with firewall rules |
 
@@ -55,6 +57,36 @@ Add these as **Terraform variables** (not environment variables) in your TFC wor
 | `cloudflare_api_token` | Terraform | **Yes** | API token with the permissions above |
 | `team_name` | Terraform | No | Zero Trust org name (the `<team>` in `<team>.cloudflareaccess.com`) |
 | `warp_app_id` | Terraform | No | *(Optional)* Existing WARP Access Application ID — leave empty for fresh deploys (see [step 2](#2-check-for-existing-warp-app)) |
+
+## Firewall Requirements
+
+The Mesh connector hosts need outbound access to the Cloudflare edge **and** inbound access from network devices sending flow data.
+
+### Connector host → Cloudflare edge (outbound)
+
+These ports must be allowed **outbound** from each connector host. The install scripts configure local firewall rules automatically (UFW on Debian, firewalld on RHEL).
+
+| Port | Protocol | Purpose |
+|------|----------|---------|
+| 2408 | UDP | Cloudflare WARP tunnel (primary) |
+| 500 | UDP | IKE — IPsec key exchange (fallback) |
+| 4500 | UDP | NAT-T — IPsec NAT traversal (fallback) |
+| 443 | TCP | HTTPS — WARP registration & API |
+| 443 | UDP | MASQUE — HTTP/3 tunnel transport |
+
+> **Tip:** If your network restricts egress, at minimum allow UDP 2408 and TCP 443 to Cloudflare IPs (`162.159.193.0/24`, `162.159.192.0/24`). See the [WARP ingress IP list](https://developers.cloudflare.com/cloudflare-one/connections/connect-devices/warp/deployment/firewall/).
+
+### Router / network device → connector host (inbound)
+
+Flow data must be able to reach the connector host from your routers or switches.
+
+| Port | Protocol | Purpose |
+|------|----------|---------|
+| 6343 | UDP | sFlow |
+| 2055 | UDP | NetFlow v5/v9 |
+| 4739 | UDP | IPFIX |
+
+> These are the standard default ports. Adjust if your devices export on non-standard ports. The install scripts do **not** open these automatically — add inbound rules for the flow ports your environment uses.
 
 ## Quick Start
 
@@ -129,15 +161,20 @@ After the first apply, enable this setting in the Cloudflare dashboard:
 
 > This is required for Mesh and cannot yet be managed by Terraform.
 
-### 6. Retrieve the Connector Token
+### 6. Retrieve Connector Tokens
 
-The connector token is marked as sensitive. To retrieve it from your local machine (requires TFC credentials):
+Connector tokens are marked as sensitive. Each region has its own token. Retrieve them from your local machine (requires TFC credentials):
 
 ```bash
 export TF_CLOUD_ORGANIZATION="YourOrg"
 export TF_WORKSPACE="your-workspace"
 terraform init
-TOKEN=$(terraform output -raw connector_token)
+
+# Get all tokens as JSON
+terraform output -json connector_tokens
+
+# Get a single region's token
+terraform output -json connector_tokens | jq -r '.["us-east"]'
 ```
 
 You can also retrieve the service token secret:
@@ -148,14 +185,15 @@ terraform output -raw service_token_client_secret
 
 ### 7. Deploy to Hosts (HA)
 
-HA is achieved by installing the **same connector token** on multiple hosts. Each host registers as a replica of the same Mesh connector.
+HA is achieved by installing the **same connector token** on multiple hosts within a region. Each host registers as a replica of that region's Mesh connector.
 
-The install scripts are in `scripts/` and accept the token as a command-line argument. Copy the appropriate script to each host and run it with the token:
+The install scripts are in `scripts/` and accept the token as a command-line argument. Copy the appropriate script to each host and run it with the region's token:
 
 **Debian/Ubuntu:**
 
 ```bash
-TOKEN=$(terraform output -raw connector_token)
+# Replace "us-east" with the target region
+TOKEN=$(terraform output -json connector_tokens | jq -r '.["us-east"]')
 
 for host in host1 host2 host3; do
   scp scripts/install_debian.sh user@${host}:~/
@@ -166,7 +204,8 @@ done
 **RHEL/CentOS/Fedora:**
 
 ```bash
-TOKEN=$(terraform output -raw connector_token)
+# Replace "us-east" with the target region
+TOKEN=$(terraform output -json connector_tokens | jq -r '.["us-east"]')
 
 for host in host1 host2 host3; do
   scp scripts/install_rhel.sh user@${host}:~/
@@ -198,6 +237,7 @@ You should see the connector listed on the [Mesh overview page](https://one.dash
 | `cloudflare_api_token` | API token with ZT permissions | — |
 | `team_name` | Zero Trust team name | — |
 | `warp_app_id` | Existing WARP Access Application ID (optional) | `""` |
+| `regions` | List of region identifiers — one HA connector per region | `["default"]` |
 | `service_token_duration` | Service token TTL | `8760h` |
 
 ## Cleanup
@@ -222,13 +262,15 @@ rm -f temp.auto.tfvars
 ├── service_token.tf         # Service token for headless enrollment
 ├── access_policy.tf         # Service Auth access policy
 ├── device_enrollment.tf     # WARP device enrollment application (with conditional import)
-├── device_profile.tf        # "sFlow" custom device profile
+├── device_profile.tf        # "sFlow" custom device profile (covers sFlow/NetFlow/IPFIX)
 ├── global_settings.tf       # Global device settings (CGNAT IPs, Gateway proxy)
 ├── mesh_connector.tf        # HA mesh connector + token construction
 ├── scripts.tf               # (reference only — documents script usage)
 ├── scripts/
 │   ├── install_debian.sh    # Standalone install script — pass token as argument
 │   └── install_rhel.sh      # Standalone install script — pass token as argument
+├── docs/
+│   └── architecture.svg     # Architecture diagram
 ├── terraform.tfvars.example
 ├── .gitignore
 └── README.md
