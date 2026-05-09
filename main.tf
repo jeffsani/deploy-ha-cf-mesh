@@ -1,8 +1,7 @@
 terraform {
-  # Terraform Cloud backend — configure via environment variables:
-  #   export TF_CLOUD_ORGANIZATION="YourOrg"
-  #   export TF_WORKSPACE="your-workspace"
-  cloud {}
+  # Backend is NOT configured here — copy one of the backend examples:
+  #   cp backend.tf.cloud-example backend.tf   # Terraform Cloud / HCP Terraform
+  #   cp backend.tf.local-example backend.tf   # Local state (on-premises)
 
   required_providers {
     cloudflare = {

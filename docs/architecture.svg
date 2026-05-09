@@ -39,10 +39,14 @@
     <text x="150" y="222" text-anchor="middle" font-size="15" font-weight="600" fill="#374151">Router Cluster</text>
     <text x="150" y="242" text-anchor="middle" font-size="13" fill="#9ca3af">VRRP / HSRP</text>
 
+    <!-- Routing note -->
+    <text x="150" y="264" text-anchor="middle" font-size="10" fill="#9ca3af">ECMP / PBR / IP SLA path monitoring</text>
+    <text x="150" y="277" text-anchor="middle" font-size="10" fill="#9ca3af">to forward flows to HA nodes</text>
+
     <!-- Flow protocol details -->
-    <text x="150" y="278" text-anchor="middle" font-size="14" font-weight="600" fill="#6b7280">Exports:</text>
-    <text x="150" y="300" text-anchor="middle" font-size="13" fill="#6b7280">sFlow — UDP/6343</text>
-    <text x="150" y="320" text-anchor="middle" font-size="13" fill="#6b7280">NetFlow/IPFIX — UDP/2055</text>
+    <text x="150" y="302" text-anchor="middle" font-size="14" font-weight="600" fill="#6b7280">Exports:</text>
+    <text x="150" y="322" text-anchor="middle" font-size="13" fill="#6b7280">sFlow — UDP/6343</text>
+    <text x="150" y="342" text-anchor="middle" font-size="13" fill="#6b7280">NetFlow/IPFIX — UDP/2055</text>
   </g>
 
   <!-- ========== Left arrow — half height, centered vertically, 10px gap from groups ========== -->
@@ -58,29 +62,24 @@
   <!-- Box: x=390..690 (width 300) -->
   <g transform="translate(390, 80)">
     <rect x="0" y="0" width="300" height="390" rx="12" fill="#FFF7ED" stroke="#F6821F" stroke-width="2" stroke-dasharray="6,3"/>
-    <text x="150" y="28" text-anchor="middle" font-size="15" font-weight="bold" fill="#F6821F">HA Group — Same Connector Token</text>
+    <text x="150" y="28" text-anchor="middle" font-size="15" font-weight="bold" fill="#F6821F">Mesh Connector HA Group</text>
+    <text x="150" y="46" text-anchor="middle" font-size="12" fill="#F6821F">Shared Connector Token</text>
 
     <!-- Host 1 -->
-    <rect x="20" y="46" width="260" height="78" rx="8" fill="#fff" stroke="#F6821F" stroke-width="1.5"/>
-    <text x="150" y="71" text-anchor="middle" font-size="14" font-weight="600" fill="#374151">&#x1F5A5; Host 1</text>
-    <text x="150" y="90" text-anchor="middle" font-size="12" fill="#6b7280">Mesh Connector + WARP Client</text>
-    <text x="150" y="108" text-anchor="middle" font-size="12" fill="#9ca3af">100.96.x.1</text>
+    <rect x="20" y="66" width="260" height="78" rx="8" fill="#fff" stroke="#F6821F" stroke-width="1.5"/>
+    <text x="150" y="91" text-anchor="middle" font-size="14" font-weight="600" fill="#374151">&#x1F5A5; Host 1</text>
+    <text x="150" y="110" text-anchor="middle" font-size="12" fill="#6b7280">Mesh Connector Node 1</text>
+    <text x="150" y="128" text-anchor="middle" font-size="12" fill="#9ca3af">100.96.x.1</text>
 
     <!-- Host 2 -->
-    <rect x="20" y="138" width="260" height="78" rx="8" fill="#fff" stroke="#F6821F" stroke-width="1.5"/>
-    <text x="150" y="163" text-anchor="middle" font-size="14" font-weight="600" fill="#374151">&#x1F5A5; Host 2</text>
-    <text x="150" y="182" text-anchor="middle" font-size="12" fill="#6b7280">Mesh Connector + WARP Client</text>
-    <text x="150" y="200" text-anchor="middle" font-size="12" fill="#9ca3af">100.96.x.2</text>
-
-    <!-- Host 3 -->
-    <rect x="20" y="230" width="260" height="78" rx="8" fill="#fff" stroke="#F6821F" stroke-width="1.5"/>
-    <text x="150" y="255" text-anchor="middle" font-size="14" font-weight="600" fill="#374151">&#x1F5A5; Host 3</text>
-    <text x="150" y="274" text-anchor="middle" font-size="12" fill="#6b7280">Mesh Connector + WARP Client</text>
-    <text x="150" y="292" text-anchor="middle" font-size="12" fill="#9ca3af">100.96.x.3</text>
+    <rect x="20" y="158" width="260" height="78" rx="8" fill="#fff" stroke="#F6821F" stroke-width="1.5"/>
+    <text x="150" y="183" text-anchor="middle" font-size="14" font-weight="600" fill="#374151">&#x1F5A5; Host 2</text>
+    <text x="150" y="202" text-anchor="middle" font-size="12" fill="#6b7280">Mesh Connector Node 2</text>
+    <text x="150" y="220" text-anchor="middle" font-size="12" fill="#9ca3af">100.96.x.2</text>
 
     <!-- IP range -->
-    <text x="150" y="338" text-anchor="middle" font-size="13" fill="#F6821F" font-weight="600">CGNAT: 100.96.0.0/12</text>
-    <text x="150" y="358" text-anchor="middle" font-size="12" fill="#9ca3af">IP forwarding enabled</text>
+    <text x="150" y="274" text-anchor="middle" font-size="13" fill="#F6821F" font-weight="600">CGNAT: 100.96.0.0/12</text>
+    <text x="150" y="294" text-anchor="middle" font-size="12" fill="#9ca3af">IP forwarding enabled</text>
   </g>
 
   <!-- ========== Right arrow — half height, centered vertically, 10px gap from groups ========== -->

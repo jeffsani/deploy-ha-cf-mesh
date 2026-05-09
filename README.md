@@ -19,8 +19,10 @@ Terraform project that deploys a highly-available [Cloudflare Mesh](https://deve
 ## Prerequisites
 
 - [Terraform](https://developer.hashicorp.com/terraform/install) >= 1.5
-- A [Terraform Cloud](https://app.terraform.io) account (or modify `main.tf` to use a local backend)
 - A Cloudflare API token with the permissions listed below
+- **One of:**
+  - A [Terraform Cloud / HCP Terraform](https://app.terraform.io) workspace, **or**
+  - A local Terraform installation (state stored on disk or any remote backend you configure)
 
 ### Manual Dashboard Setting (not yet in Terraform)
 
@@ -47,16 +49,16 @@ Create a [custom API token](https://dash.cloudflare.com/profile/api-tokens) scop
 | **Zero Trust** | Edit | Custom device profile |
 | **Account Settings** | Read | Account-level resource lookups |
 
-### Terraform Cloud Workspace Variables
+### Input Variables
 
-Add these as **Terraform variables** (not environment variables) in your TFC workspace settings:
+The following variables must be set regardless of which backend you use. See [Set Variables](#3-set-variables) for how to provide them.
 
-| Variable | Category | Sensitive | Description |
-|----------|----------|-----------|-------------|
-| `cloudflare_account_id` | Terraform | **Yes** | Your Cloudflare account ID |
-| `cloudflare_api_token` | Terraform | **Yes** | API token with the permissions above |
-| `team_name` | Terraform | No | Zero Trust org name (the `<team>` in `<team>.cloudflareaccess.com`) |
-| `warp_app_id` | Terraform | No | *(Optional)* Existing WARP Access Application ID — leave empty for fresh deploys (see [step 2](#2-check-for-existing-warp-app)) |
+| Variable | Sensitive | Description |
+|----------|-----------|-------------|
+| `cloudflare_account_id` | **Yes** | Your Cloudflare account ID |
+| `cloudflare_api_token` | **Yes** | API token with the permissions above |
+| `team_name` | No | Zero Trust org name (the `<team>` in `<team>.cloudflareaccess.com`) |
+| `warp_app_id` | No | *(Optional)* Existing WARP Access Application ID — leave empty for fresh deploys (see [step 2](#2-check-for-existing-warp-app)) |
 
 ## Firewall Requirements
 
@@ -90,25 +92,32 @@ Flow data must be able to reach the connector host from your routers or switches
 
 ## Quick Start
 
-### 1. Configure Terraform Cloud
+### 1. Configure Backend
 
-Update the `cloud` block in `main.tf` with your TFC organization and workspace name:
+Choose a backend by copying one of the provided examples to `backend.tf` (which is gitignored):
 
-```hcl
-cloud {
-  organization = "YourOrg"
-  workspaces {
-    name = "your-workspace"
-  }
-}
+**Terraform Cloud / HCP Terraform:**
+
+```bash
+cp backend.tf.cloud-example backend.tf
+# Edit backend.tf with your organization and workspace name
 ```
 
-Alternatively, set environment variables and remove the literal values from `main.tf`:
+Or set environment variables instead of editing the file:
 
 ```bash
 export TF_CLOUD_ORGANIZATION="YourOrg"
 export TF_WORKSPACE="your-workspace"
+cp backend.tf.cloud-example backend.tf
 ```
+
+**Local state (on-premises):**
+
+```bash
+cp backend.tf.local-example backend.tf
+```
+
+> You can also configure any other [Terraform backend](https://developer.hashicorp.com/terraform/language/backend) (S3, GCS, Consul, etc.) in `backend.tf`.
 
 ### 2. Check for Existing WARP App
 
@@ -119,14 +128,12 @@ curl -s "https://api.cloudflare.com/client/v4/accounts/<ACCOUNT_ID>/access/apps"
   -H "Authorization: Bearer <API_TOKEN>" | jq '.result[] | select(.type=="warp") | .id'
 ```
 
-- **If it returns a UUID** → you have an existing WARP app. You **must** create a `warp_app_id` Terraform variable in your TFC workspace and set it to that UUID. Terraform will import the existing app into state instead of trying to create a duplicate (which would fail with a 409 error).
-- **If it returns empty** → this is a fresh account with no WARP app. **Do not** create a `warp_app_id` variable in TFC. Terraform will create the app automatically.
-
-> **Important:** In TFC, "not set" means the variable does not exist in the workspace at all. Do not create the variable and set it to `""` — TFC will pass literal quotes which causes an error.
+- **If it returns a UUID** → you have an existing WARP app. Set `warp_app_id` to that UUID (see step 3). Terraform will import the existing app into state instead of trying to create a duplicate (which would fail with a 409 error).
+- **If it returns empty** → this is a fresh account with no WARP app. Do **not** set `warp_app_id`. Terraform will create the app automatically.
 
 ### 3. Set Variables
 
-Add the following as **Terraform variables** (not environment variables) in your [TFC workspace settings](https://app.terraform.io):
+**Terraform Cloud / HCP Terraform** — add the following as **Terraform variables** (not environment variables) in your [workspace settings](https://app.terraform.io):
 
 | Variable | Sensitive | Required | Value |
 |----------|-----------|----------|-------|
@@ -135,7 +142,9 @@ Add the following as **Terraform variables** (not environment variables) in your
 | `team_name` | No | Yes | Zero Trust org name (`<team>` in `<team>.cloudflareaccess.com`) |
 | `warp_app_id` | No | Only if step 2 returned a UUID | The UUID from step 2 |
 
-For **local development**, you can alternatively use a tfvars file:
+> **TFC note:** "not set" means the variable does not exist in the workspace at all. Do not create `warp_app_id` and set it to `""` — TFC will pass literal quotes which causes an error.
+
+**Local / on-premises** — use a tfvars file:
 
 ```bash
 cp terraform.tfvars.example temp.auto.tfvars
@@ -163,19 +172,17 @@ After the first apply, enable this setting in the Cloudflare dashboard:
 
 ### 6. Retrieve Connector Tokens
 
-Connector tokens are marked as sensitive. Each region has its own token. Retrieve them from your local machine (requires TFC credentials):
+Connector tokens are marked as sensitive. Each region has its own token.
 
 ```bash
-export TF_CLOUD_ORGANIZATION="YourOrg"
-export TF_WORKSPACE="your-workspace"
-terraform init
-
 # Get all tokens as JSON
 terraform output -json connector_tokens
 
 # Get a single region's token
 terraform output -json connector_tokens | jq -r '.["us-east"]'
 ```
+
+> **TFC users:** If running from a machine without local state, run `terraform init` first so the CLI can read remote state.
 
 You can also retrieve the service token secret:
 
@@ -256,7 +263,9 @@ rm -f temp.auto.tfvars
 
 ```
 .
-├── main.tf                  # Provider & backend config
+├── main.tf                  # Provider config (no backend — see below)
+├── backend.tf.cloud-example # Terraform Cloud / HCP Terraform backend
+├── backend.tf.local-example # Local state backend
 ├── variables.tf             # Input variables
 ├── outputs.tf               # Outputs (tokens)
 ├── service_token.tf         # Service token for headless enrollment

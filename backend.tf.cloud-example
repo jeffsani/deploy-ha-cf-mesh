@@ -1,0 +1,13 @@
+# Terraform Cloud / HCP Terraform backend.
+# Copy this file to backend.tf and update the values, or set env vars:
+#   export TF_CLOUD_ORGANIZATION="YourOrg"
+#   export TF_WORKSPACE="your-workspace"
+
+terraform {
+  cloud {
+    organization = "YourOrg"
+    workspaces {
+      name = "your-workspace"
+    }
+  }
+}

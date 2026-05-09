@@ -1,0 +1,8 @@
+# Local backend — state is stored on disk.
+# Copy this file to backend.tf. No further configuration needed.
+
+terraform {
+  backend "local" {
+    path = "terraform.tfstate"
+  }
+}
