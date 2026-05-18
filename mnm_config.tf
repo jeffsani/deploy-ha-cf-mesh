@@ -27,6 +27,12 @@ locals {
   all_router_ips = distinct([for entry in local.router_entries : entry.router_ip])
 }
 
+import {
+  for_each = length(var.routers) > 0 ? toset(["import"]) : toset([])
+  to       = cloudflare_magic_network_monitoring_configuration.flow_config[0]
+  id       = var.cloudflare_account_id
+}
+
 resource "cloudflare_magic_network_monitoring_configuration" "flow_config" {
   count = length(var.routers) > 0 ? 1 : 0
 

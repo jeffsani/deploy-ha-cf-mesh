@@ -13,4 +13,8 @@ resource "cloudflare_zero_trust_device_settings" "global" {
   # Enable Gateway proxy for TCP and UDP (required for Mesh traffic)
   gateway_proxy_enabled     = true
   gateway_udp_proxy_enabled = true
+
+  # Required defaults — omitting these can cause "invalid account settings request"
+  root_certificate_installation_enabled = true
+  disable_for_time                      = 0
 }
