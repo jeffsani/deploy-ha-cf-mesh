@@ -25,20 +25,32 @@ locals {
 
   # Deduplicate router IPs across all regions for the top-level router_ips list
   all_router_ips = distinct([for entry in local.router_entries : entry.router_ip])
+
+  # JSON payload for the PATCH call below
+  mnm_payload = jsonencode({
+    router_ips   = local.all_router_ips
+    warp_devices = local.warp_devices
+  })
 }
 
-import {
-  for_each = length(var.routers) > 0 ? toset(["import"]) : toset([])
-  to       = cloudflare_magic_network_monitoring_configuration.flow_config[0]
-  id       = var.cloudflare_account_id
-}
+# The cloudflare_magic_network_monitoring_configuration resource does not
+# support import, and the MNM config is a per-account singleton that already
+# exists (POST returns 403 "Account already exists").  We call the PATCH
+# endpoint directly so Terraform can manage the warp_devices mapping without
+# needing to import the pre-existing object.
 
-resource "cloudflare_magic_network_monitoring_configuration" "flow_config" {
+resource "terraform_data" "mnm_config" {
   count = length(var.routers) > 0 ? 1 : 0
 
-  account_id       = var.cloudflare_account_id
-  name             = var.team_name
-  default_sampling = 1
-  router_ips       = local.all_router_ips
-  warp_devices     = local.warp_devices
+  triggers_replace = local.mnm_payload
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      curl -sf "https://api.cloudflare.com/client/v4/accounts/${var.cloudflare_account_id}/mnm/config" \
+        --request PATCH \
+        --header "Authorization: Bearer ${var.cloudflare_api_token}" \
+        --header "Content-Type: application/json" \
+        --data '${local.mnm_payload}'
+    EOT
+  }
 }
