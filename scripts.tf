@@ -1,7 +1,13 @@
-# Install scripts are now standalone bash scripts in scripts/.
-# They accept the connector token as a CLI argument.
-# No Terraform rendering needed — just copy the script to hosts and run:
+# Install scripts are standalone bash scripts in scripts/.
+# They accept four arguments: connector token, router IP, account ID, API token.
+# After enrolling the host, the script auto-registers the WARP device with
+# Magic Network Monitoring (MNM) so encrypted flow data is routed correctly.
 #
-#   TOKEN=$(terraform output -raw connector_token)
+# Usage:
+#   TOKEN=$(terraform output -json connector_tokens | jq -r '."<region>"')
 #   scp scripts/install_debian.sh user@host:~/
-#   ssh user@host "chmod +x ~/install_debian.sh && sudo ~/install_debian.sh $TOKEN"
+#   ssh user@host "chmod +x ~/install_debian.sh && sudo ~/install_debian.sh \
+#     $TOKEN <ROUTER_IPS> <ACCOUNT_ID> <API_TOKEN>"
+#
+# ROUTER_IPS can be a single IP or comma-separated for multiple routers:
+#   "10.1.0.1" or "10.1.0.1,10.1.0.2"

@@ -5,19 +5,24 @@ set -euo pipefail
 # Cloudflare Mesh Connector Install Script — Debian/Ubuntu
 #
 # Usage:
-#   sudo ./install_debian.sh <CONNECTOR_TOKEN>
+#   sudo ./install_debian.sh <CONNECTOR_TOKEN> <ROUTER_IPS> <ACCOUNT_ID> <API_TOKEN>
 #
-# The connector token can be obtained from Terraform:
-#   terraform output -raw connector_token
+# Arguments:
+#   CONNECTOR_TOKEN  — from: terraform output -json connector_tokens | jq -r '."<region>"'
+#   ROUTER_IPS       — Comma-separated router IPs whose flow data this node tunnels
+#                      e.g. "10.1.0.1" or "10.1.0.1,10.1.0.2,10.2.0.1"
+#   ACCOUNT_ID       — Cloudflare account ID
+#   API_TOKEN        — Cloudflare API token with MNM Admin permission
 # =============================================================================
 
 CONNECTOR_TOKEN="${1:-}"
+ROUTER_IPS="${2:-}"
+ACCOUNT_ID="${3:-}"
+API_TOKEN="${4:-}"
 
-if [[ -z "$CONNECTOR_TOKEN" ]]; then
-  echo "ERROR: Connector token is required."
-  echo "Usage: $0 <CONNECTOR_TOKEN>"
-  echo ""
-  echo "Get the token with: terraform output -raw connector_token"
+if [[ -z "$CONNECTOR_TOKEN" || -z "$ROUTER_IPS" || -z "$ACCOUNT_ID" || -z "$API_TOKEN" ]]; then
+  echo "ERROR: All four arguments are required."
+  echo "Usage: $0 <CONNECTOR_TOKEN> <ROUTER_IPS> <ACCOUNT_ID> <API_TOKEN>"
   exit 1
 fi
 
@@ -53,4 +58,54 @@ echo ">>> Registering mesh connector..."
 warp-cli --accept-tos connector new "$CONNECTOR_TOKEN"
 warp-cli --accept-tos connect
 
+# ---------------------------------------------------------------------------
+# Auto-register this WARP device with Magic Network Monitoring
+# ---------------------------------------------------------------------------
+echo ">>> Registering device with Magic Network Monitoring..."
+
+# Wait briefly for registration to propagate
+sleep 5
+
+# Get the WARP device ID from the local registration
+DEVICE_ID=$(warp-cli registration show 2>/dev/null | grep -i '^Device ID:' | awk '{print $NF}')
+if [[ -z "$DEVICE_ID" ]]; then
+  echo "WARNING: Could not obtain WARP Device ID. MNM registration skipped."
+  echo "         Run 'warp-cli registration show' manually and register via the API."
+  exit 0
+fi
+
+DEVICE_NAME=$(hostname)-mesh
+
+# Fetch the current MNM config
+CURRENT_CONFIG=$(curl -sf \
+  "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/mnm/config" \
+  -H "Authorization: Bearer ${API_TOKEN}" \
+  -H "Content-Type: application/json")
+
+# Build updated config: append this device for each router IP (deduplicated)
+UPDATED_PAYLOAD=$(echo "$CURRENT_CONFIG" | python3 -c "
+import json, sys
+cfg = json.load(sys.stdin).get('result', {})
+devices = cfg.get('warp_devices', [])
+router_ips = cfg.get('router_ips', [])
+existing_pairs = {(d['id'], d['router_ip']) for d in devices}
+
+for ip in '$ROUTER_IPS'.split(','):
+    ip = ip.strip()
+    if ('$DEVICE_ID', ip) not in existing_pairs:
+        devices.append({'id': '$DEVICE_ID', 'name': '$DEVICE_NAME', 'router_ip': ip})
+    if ip not in router_ips:
+        router_ips.append(ip)
+
+json.dump({'router_ips': router_ips, 'warp_devices': devices}, sys.stdout)
+")
+
+# PATCH the MNM config
+curl -sf "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/mnm/config" \
+  --request PATCH \
+  -H "Authorization: Bearer ${API_TOKEN}" \
+  -H "Content-Type: application/json" \
+  --data "$UPDATED_PAYLOAD" > /dev/null
+
+echo ">>> MNM registration complete (Device ID: $DEVICE_ID, Routers: $ROUTER_IPS)."
 echo ">>> Mesh Connector setup complete."
