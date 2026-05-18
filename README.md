@@ -13,6 +13,7 @@ Terraform project that deploys a highly-available [Cloudflare Mesh](https://deve
 | **Device Enrollment App** | WARP-type Access Application wired to the service auth policy |
 | **Custom Device Profile** | "sFlow" profile — Traffic Only mode, Include split-tunnel for `162.159.65.1/32` (also covers NetFlow/IPFIX to the same collector) |
 | **Mesh Connectors** | One HA connector per region (controlled by the `regions` variable) |
+| **MNM Configuration** | Magic Network Monitoring config — registers each mesh connector as a WARP device and maps it to the router IPs it tunnels (only created when `routers` is set) |
 | **Global Device Settings** | Enables unique CGNAT IPs per device and Gateway proxy (TCP/UDP) — both required for Mesh |
 | **Install Scripts** | Per-connector Debian and RHEL bash scripts with firewall rules |
 
@@ -47,6 +48,7 @@ Create a [custom API token](https://dash.cloudflare.com/profile/api-tokens) scop
 | **Access: Service Tokens** | Edit | Service token for headless enrollment |
 | **Cloudflare One Connectors** | Edit | Mesh connector creation and token retrieval |
 | **Zero Trust** | Edit | Custom device profile |
+| **Magic Network Monitoring Admin** | Edit | MNM configuration (router → WARP device mapping) |
 | **Account Settings** | Read | Account-level resource lookups |
 
 ### Input Variables
@@ -59,6 +61,8 @@ The following variables must be set regardless of which backend you use. See [Se
 | `cloudflare_api_token` | **Yes** | API token with the permissions above |
 | `team_name` | No | Zero Trust org name (the `<team>` in `<team>.cloudflareaccess.com`) |
 | `warp_app_id` | No | *(Optional)* Existing WARP Access Application ID — leave empty for fresh deploys (see [step 2](#2-check-for-existing-warp-app)) |
+| `regions` | No | *(Optional)* List of region identifiers — one HA connector per region (default: `["default"]`) |
+| `routers` | No | *(Optional)* Map of region → list of router IPs that export flow data through that region’s connector (default: `{}` — skips MNM config) |
 
 ## Firewall Requirements
 
@@ -274,6 +278,7 @@ rm -f temp.auto.tfvars
 ├── device_profile.tf        # "sFlow" custom device profile (covers sFlow/NetFlow/IPFIX)
 ├── global_settings.tf       # Global device settings (CGNAT IPs, Gateway proxy)
 ├── mesh_connector.tf        # HA mesh connector + token construction
+├── mnm_config.tf            # Magic Network Monitoring config (router → WARP device mapping)
 ├── scripts.tf               # (reference only — documents script usage)
 ├── scripts/
 │   ├── install_debian.sh    # Standalone install script — pass token as argument

@@ -12,5 +12,13 @@ warp_app_id = "your-warp-app-id"
 # Regions — one HA mesh connector per region (default: ["default"])
 # regions = ["us-east", "eu-west"]
 
+# Router IPs per region — registers routers with Cloudflare MNM so the
+# collector knows which mesh connector tunnels each router's flow data.
+# Keys must match the regions list above. Leave empty ({}) to skip MNM config.
+# routers = {
+#   "us-east" = ["10.1.0.1", "10.1.0.2"]
+#   "eu-west" = ["10.2.0.1"]
+# }
+
 # Service token duration (default: 1 year)
 # service_token_duration = "8760h"
