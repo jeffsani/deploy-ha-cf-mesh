@@ -86,30 +86,56 @@ CURRENT_CONFIG=$(curl -sf \
   -H "Authorization: Bearer ${API_TOKEN}" \
   -H "Content-Type: application/json")
 
-# Build updated config: append this device for each router IP (deduplicated)
-UPDATED_PAYLOAD=$(echo "$CURRENT_CONFIG" | python3 -c "
+# Step 1: Remove any stale entries for this host (the API won't update a
+#         device ID in-place — you must remove first, then re-add).
+REMOVE_PAYLOAD=$(echo "$CURRENT_CONFIG" | python3 -c "
 import json, sys
 cfg = json.load(sys.stdin).get('result', {})
 devices = cfg.get('warp_devices', [])
 router_ips = cfg.get('router_ips', [])
-existing_pairs = {(d['id'], d['router_ip']) for d in devices}
+
+# Remove entries matching this host's name or device ID
+devices = [d for d in devices if d.get('name') != '$DEVICE_NAME' and d['id'] != '$DEVICE_ID']
+
+# Prune router_ips that no longer have any device
+active_ips = {d['router_ip'] for d in devices}
+router_ips = [ip for ip in router_ips if ip in active_ips]
+
+json.dump({'router_ips': router_ips, 'warp_devices': devices}, sys.stdout)
+")
+
+curl -sf "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/mnm/config" \
+  --request PATCH \
+  -H "Authorization: Bearer ${API_TOKEN}" \
+  -H "Content-Type: application/json" \
+  --data "$REMOVE_PAYLOAD" > /dev/null
+
+# Step 2: Re-fetch config and add this device with the current ID
+CURRENT_CONFIG=$(curl -sf \
+  "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/mnm/config" \
+  -H "Authorization: Bearer ${API_TOKEN}" \
+  -H "Content-Type: application/json")
+
+ADD_PAYLOAD=$(echo "$CURRENT_CONFIG" | python3 -c "
+import json, sys
+cfg = json.load(sys.stdin).get('result', {})
+devices = cfg.get('warp_devices', [])
+router_ips = cfg.get('router_ips', [])
 
 for ip in '$ROUTER_IPS'.split(','):
     ip = ip.strip()
-    if ('$DEVICE_ID', ip) not in existing_pairs:
-        devices.append({'id': '$DEVICE_ID', 'name': '$DEVICE_NAME', 'router_ip': ip})
+    devices.append({'id': '$DEVICE_ID', 'name': '$DEVICE_NAME', 'router_ip': ip})
     if ip not in router_ips:
         router_ips.append(ip)
 
 json.dump({'router_ips': router_ips, 'warp_devices': devices}, sys.stdout)
 ")
 
-# PATCH the MNM config
 curl -sf "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/mnm/config" \
   --request PATCH \
   -H "Authorization: Bearer ${API_TOKEN}" \
   -H "Content-Type: application/json" \
-  --data "$UPDATED_PAYLOAD" > /dev/null
+  --data "$ADD_PAYLOAD" > /dev/null
 
 echo ">>> MNM registration complete (Device ID: $DEVICE_ID, Routers: $ROUTER_IPS)."
 echo ">>> Mesh Connector setup complete."
