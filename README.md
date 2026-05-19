@@ -196,29 +196,40 @@ terraform output -raw service_token_client_secret
 
 HA is achieved by installing the **same connector token** on multiple hosts within a region. Each host registers as a replica of that region's Mesh connector.
 
-The install scripts are in `scripts/` and accept the token as a command-line argument. Copy the appropriate script to each host and run it with the region's token:
+The install scripts are in `scripts/` and accept four arguments. Copy the appropriate script to each host and run it:
+
+```
+Usage: install_debian.sh <CONNECTOR_TOKEN> <ROUTER_IPS> <ACCOUNT_ID> <API_TOKEN>
+       install_rhel.sh   <CONNECTOR_TOKEN> <ROUTER_IPS> <ACCOUNT_ID> <API_TOKEN>
+```
+
+- **CONNECTOR_TOKEN** — from `terraform output -json connector_tokens | jq -r '."<region>"'`
+- **ROUTER_IPS** — comma-separated IPs of routers whose flow data this node tunnels (e.g. `"10.1.0.1"` or `"10.1.0.1,10.1.0.2"`)
+- **ACCOUNT_ID** — your Cloudflare account ID
+- **API_TOKEN** — Cloudflare API token with MNM Admin permission
 
 **Debian/Ubuntu:**
 
 ```bash
 # Replace "us-east" with the target region
 TOKEN=$(terraform output -json connector_tokens | jq -r '.["us-east"]')
+ROUTER_IPS="10.1.0.1"  # comma-separate for multiple routers
 
-for host in host1 host2 host3; do
+for host in host1 host2; do
   scp scripts/install_debian.sh user@${host}:~/
-  ssh user@${host} "chmod +x ~/install_debian.sh && sudo ~/install_debian.sh $TOKEN"
+  ssh user@${host} "chmod +x ~/install_debian.sh && sudo ~/install_debian.sh $TOKEN $ROUTER_IPS $ACCOUNT_ID $API_TOKEN"
 done
 ```
 
 **RHEL/CentOS/Fedora:**
 
 ```bash
-# Replace "us-east" with the target region
 TOKEN=$(terraform output -json connector_tokens | jq -r '.["us-east"]')
+ROUTER_IPS="10.1.0.1"
 
-for host in host1 host2 host3; do
+for host in host1 host2; do
   scp scripts/install_rhel.sh user@${host}:~/
-  ssh user@${host} "chmod +x ~/install_rhel.sh && sudo ~/install_rhel.sh $TOKEN"
+  ssh user@${host} "chmod +x ~/install_rhel.sh && sudo ~/install_rhel.sh $TOKEN $ROUTER_IPS $ACCOUNT_ID $API_TOKEN"
 done
 ```
 
@@ -227,6 +238,7 @@ The install scripts will:
 2. Enable IP forwarding (`net.ipv4.ip_forward=1`)
 3. Configure firewall rules (UFW or firewalld) for WARP/MASQUE ports
 4. Register the host as a Mesh connector replica using `warp-cli connector new`
+5. Auto-register the WARP device with Magic Network Monitoring (MNM)
 
 ### 8. Verify
 
@@ -237,6 +249,34 @@ ssh user@host1 'warp-cli status'
 ```
 
 You should see the connector listed on the [Mesh overview page](https://one.dash.cloudflare.com/?to=/:account/mesh) in the Cloudflare dashboard.
+
+### 9. Remove a Mesh Connector from a Node
+
+To decommission a host, use the uninstall script. It removes the device from MNM, deregisters the connector, uninstalls WARP, and cleans up firewall/sysctl settings.
+
+**Debian/Ubuntu:**
+
+```bash
+scp scripts/uninstall_debian.sh user@host:~/
+ssh user@host "chmod +x ~/uninstall_debian.sh && sudo ~/uninstall_debian.sh $ACCOUNT_ID $API_TOKEN"
+```
+
+**RHEL/CentOS/Fedora:**
+
+```bash
+scp scripts/uninstall_rhel.sh user@host:~/
+ssh user@host "chmod +x ~/uninstall_rhel.sh && sudo ~/uninstall_rhel.sh $ACCOUNT_ID $API_TOKEN"
+```
+
+The uninstall scripts will:
+1. Read the WARP device ID from the local registration
+2. Remove the device (and any orphaned router IPs) from the MNM config via API
+3. Disconnect and deregister the WARP connector
+4. Uninstall the `cloudflare-warp` package
+5. Remove firewall rules (UFW or firewalld) added by the install script
+6. Remove the IP forwarding sysctl override
+
+> **Note:** If WARP was already uninstalled or the registration is missing, the script skips MNM cleanup gracefully. You can also remove devices manually from the [MNM dashboard](https://dash.cloudflare.com/?to=/:account/magic-network-monitoring/configuration).
 
 ## Variables
 
@@ -250,6 +290,8 @@ You should see the connector listed on the [Mesh overview page](https://one.dash
 | `service_token_duration` | Service token TTL | `8760h` |
 
 ## Cleanup
+
+To tear down all Terraform-managed resources (connectors, service tokens, policies, etc.):
 
 ```bash
 terraform destroy
@@ -279,8 +321,10 @@ rm -f temp.auto.tfvars
 ├── mnm_config.tf            # MNM reference (device registration handled by install scripts)
 ├── scripts.tf               # (reference only — documents script usage)
 ├── scripts/
-│   ├── install_debian.sh    # Standalone install script — pass token as argument
-│   └── install_rhel.sh      # Standalone install script — pass token as argument
+│   ├── install_debian.sh    # Install + MNM registration (Debian/Ubuntu)
+│   ├── install_rhel.sh      # Install + MNM registration (RHEL/CentOS/Fedora)
+│   ├── uninstall_debian.sh  # Uninstall + MNM cleanup (Debian/Ubuntu)
+│   └── uninstall_rhel.sh    # Uninstall + MNM cleanup (RHEL/CentOS/Fedora)
 ├── docs/
 │   └── architecture.svg     # Architecture diagram
 ├── terraform.tfvars.example
